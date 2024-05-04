@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather & Time App</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.9/css/weather-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style>
+    /* Global Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-image: linear-gradient(to bottom, #8c9eff, #e1f5fe);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  .container {
+      max-width: 400px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+  .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  .header.time {
+      font-size: 48px;
+      font-weight: bold;
+      color: #333;
+      margin-right: 20px;
+      animation: fadeIn 1s ease-in-out;
+    }
+  .header.location {
+      font-size: 18px;
+      color: #666;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 0.2s;
+    }
+  .weather {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 0.4s;
+    }
+  .weather.icon {
+      font-size: 48px;
+      color: #333;
+      animation: rotate 2s linear infinite;
+    }
+  .weather.temp {
+      font-size: 24px;
+      color: #666;
+      margin-right: 20px;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 0.6s;
+    }
+  .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #999;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 0.8s;
+    }
+  .footer.humidity {
+      margin-right: 20px;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 1s;
+    }
+  .footer.wind {
+      margin-left: 20px;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 1.2s;
+    }
+  .footer i {
+      margin-right: 5px;
+      animation: fadeIn 1s ease-in-out;
+      animation-delay: 1.4s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span id="time" class="time"></span>
+      <span id="location" class="location"></span>
+    </div>
+    <div class="weather">
+      <i id="icon" class="icon"></i>
+      <span id="temp" class="temp"></span>
+    </div>
+    <div class="footer">
+      <div class="humidity">
+        <i class="wi wi-humidity"></i>
+        <span id="humidity"></span>
+      </div>
+      <div class="wind">
+        <i class="wi wi-strong-wind"></i>
+        <span id="wind"></span>
+      </div>
+    </div>
+    <div class="background">
+      <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+  </div>
+  <script>
+    // Get the current time
+    function currentTime() {
+      const date = new Date();
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const seconds = date.getSeconds();
+      const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      document.getElementById("time").textContent = timeString;
+    }
+
+    // Get the current weather data
+    function currentWeather() {
+      const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
+      const ipApiKey = 'YOUR_IPGEOLOCATIONAPI_API_KEY';
+
+      // Get the user's location using the IP Geolocation API
+      fetch(`https://ipapi.co/json/`)
+       .then(response => response.json())
+       .then(data => {
+          const location = data.city + ', ' + data.country_name;
+          document.getElementById("location").textContent = location;
+
+          // Get the weather data using the OpenWeatherMap API
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${data.latitude}&lon=${data.longitude}&appid=${apiKey}`)
+           .then(response => response.json())
+           .then(data => {
+              const tempKelvin = data.main.temp;
+              const iconCode = data.weather[0].icon;
+              const humidity = data.main.humidity + '%';
+              const windSpeed = data.wind.speed + ' m/s';
+
+              // Convert the temperature from Kelvin to Celsius
+              const tempCelsius = Math.round(tempKelvin - 273.15);
+              document.getElementById("icon").className = `wi wi-${iconCode}`;
+              document.getElementById("temp").textContent = `${tempCelsius}°C`;
+              document.getElementById("humidity").textContent = humidity;
+              document.getElementById("wind").textContent = windSpeed;
+            })
+          .catch(error => console.error(error));
+        })
+      .catch(error => console.error(error));
+    }
+
+    // Update the time and weather every second
+    setInterval(() => {
+      currentTime();
+      currentWeather();
+    }, 1000);
+
+    // Create a canvas background animation
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let x = 0;
+    let y = 0;
+    let dx = 2;
+    let dy = 2;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, 2 * Math.PI);
+      ctx.fill();
+      x += dx;
+      y += dy;
+      if (x + 10 > canvas.width || x - 10 < 0) {
+        dx = -dx;
+      }
+      if (y + 10 > canvas.height || y - 10 < 0) {
+        dy = -dy;
+      }
+    }
+
+    setInterval(draw, 16);
+  </script>
+</body>
+</html>
